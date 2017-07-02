@@ -1,4 +1,4 @@
-# Rails Config Loaders
+# Rails Health Check
 
 ## Description
 
