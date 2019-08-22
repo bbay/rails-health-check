@@ -11,6 +11,8 @@ module RailsHealthCheck
           health_latency_response
         elsif health_db_path?(env['PATH_INFO'])
           health_db_response
+        elsif overall_health_path?(env['PATH_INFO'])
+          overall_health_response
         end
       else
         @app.call(env)
@@ -31,6 +33,10 @@ module RailsHealthCheck
       request_path == '/health/db'
     end
 
+    def overall_health_path
+      request_path == '/health'
+    end
+    
     def health_latency_response
       # [status, headers, body]
       [200, { 'Content-Type' => 'application/json' }, [{ msg: 'ok' }.to_json]]
@@ -38,7 +44,7 @@ module RailsHealthCheck
 
     def health_db_response
       begin
-        validate_migration
+        needs_migration?
 
         status = 200
         msg = 'ok'
@@ -51,10 +57,37 @@ module RailsHealthCheck
       [status, { 'Content-Type' => 'application/json' }, [{ msg: msg }.to_json]]
     end
 
-    def validate_migration
-      # Check connection to the DB and needs migration or not
-      if ActiveRecord::Migrator.needs_migration?
-        raise 'Schema is not latest!'
+    def overall_health_response
+      begin
+        if !database_exists? raise 'Database does not exists'
+
+        status = 200
+        msg = 'ok'
+
+      rescue => e
+        status = 500
+        msg = e.message
+      end
+
+      # [status, headers, body]
+      [status, { 'Content-Type' => 'application/json' }, [{ msg: msg }.to_json]]
+    end
+
+    def database_exists?
+        ActiveRecord::Base.connection
+      rescue ActiveRecord::NoDatabaseError
+        false
+      else
+        true
+    end
+
+    def needs_migration?
+      return true if !database_exists?
+      if ActiveRecord::Base.connection.respond_to?(:migration_context)
+        # Rails >= 5.2
+        ActiveRecord::Base.connection.migration_context.needs_migration?
+      else
+        ActiveRecord::Migrator.needs_migration?
       end
     end
   end
