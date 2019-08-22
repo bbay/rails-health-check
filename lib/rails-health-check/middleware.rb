@@ -22,7 +22,7 @@ module RailsHealthCheck
     protected
 
     def health_path?(request_path)
-      health_latency_path?(request_path) || health_db_path?(request_path)
+      health_latency_path?(request_path) || health_db_path?(request_path) || overall_health_path?(request_path)
     end
 
     def health_latency_path?(request_path)
@@ -33,7 +33,7 @@ module RailsHealthCheck
       request_path == '/health/db'
     end
 
-    def overall_health_path
+    def overall_health_path?(request_path)
       request_path == '/health'
     end
     
@@ -59,7 +59,7 @@ module RailsHealthCheck
 
     def overall_health_response
       begin
-        if !database_exists? raise 'Database does not exists'
+        raise 'Database does not exists' if !database_exists?
 
         status = 200
         msg = 'ok'
