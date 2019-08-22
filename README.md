@@ -1,5 +1,10 @@
 # Rails Health Check
 
+## Fork notes
+
+Added a  `/health` path that checks if DB exists and app responds
+Fixed compatibility with newer Rails versions.
+
 ## Description
 
 The gem is a simple solution if you want health check apis of latency and database.
