@@ -44,7 +44,8 @@ module RailsHealthCheck
 
     def health_db_response
       begin
-        needs_migration?
+        raise 'Database does not exists' if !database_exists?
+        raise 'Database not migrated' if needs_migration?
 
         status = 200
         msg = 'ok'
@@ -60,6 +61,7 @@ module RailsHealthCheck
     def overall_health_response
       begin
         raise 'Database does not exists' if !database_exists?
+        raise 'Database not migrated' if needs_migration?
 
         status = 200
         msg = 'ok'
